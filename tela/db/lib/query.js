@@ -10,13 +10,14 @@ module.exports = function(db) {
     function caller(opts, block, cb) {
       return new Promise((resolve, reject) => {
         opts.start = Date.now()
+        opts.model = modelName
         block( table )
           .then(
             (data) => {
               data = cb(data)
               opts.time = new Date - opts.start
               opts.data = data
-              db.emit(opts.event, opts.type, opts)
+              db.emit(opts.event, opts)
               resolve(data)
             },
             (err) => {

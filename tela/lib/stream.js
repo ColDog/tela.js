@@ -49,23 +49,24 @@ class Stream {
 }
 
 function request(model, action, params) {
-  var id = Math.random().toString(36).substr(2, 36);
-  socket.emit('request', {
-    id: 'response'+id,
-    model: model,
-    action: action,
-    params: params,
-    type: 'request'
-  });
-
   return new Promise(function(resolve, reject){
+    var id = Math.random().toString(36).substr(2, 36)
     socket.on('response'+id, function(data){
+      console.log('got response')
       if (data && data.error) {
         reject(data)
       } else {
         resolve(data)
       }
     })
+
+    socket.emit('request', {
+      id: 'response'+id,
+      model: model,
+      action: action,
+      params: params,
+      type: 'request'
+    });
   })
 }
 

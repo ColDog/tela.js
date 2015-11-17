@@ -54,9 +54,9 @@ module.exports = function(app) {
       // objects into normal javascript objects.
       function toObject(res) {
         if (typeof res === 'object') {
-          res.map((rec) => { return rec._attrs })
+          return res.map((rec) => { return rec._attrs })
         } else {
-          try { res = res._attrs } catch (e) {}
+          try { return res._attrs } catch (e) {}
         }
       }
 
@@ -70,8 +70,8 @@ module.exports = function(app) {
 
             // runs the action and returns the result
             model[msg.action](msg.params).then(
-              (data)  => { socket.emit(msg.id, toObject(data)) },
-              (err)   => { socket.emit(msg.id, {error: err}) }
+              (data)  => { console.log('responding data', msg.id, data) ; socket.emit(msg.id, toObject(data)) },
+              (err)   => { console.log('responding err', msg.id, err) ; socket.emit(msg.id, {error: err}) }
             )
 
             // catch any errors and send them back the stream
@@ -95,8 +95,13 @@ module.exports = function(app) {
      * will be cached in the messages array which will be essentially read only.
      * */
     function isStale(update) {
+      console.log('calling is stale', update)
       // iterates through all messages
       app.clients[socket.id].forEach((msg) => {
+
+        // TODO: more advanced algorithm here to detect when queries should be rerun
+        // currently this function just looks at whether the messages model has been overwritten
+        // if it has, then it re-runs the query.
         if (msg.model === update.model) { respond(msg) }
       })
     }

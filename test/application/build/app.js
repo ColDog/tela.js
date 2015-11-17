@@ -153,15 +153,15 @@ class Model {
   constructor() {}
 
   static all() {
-    return new Stream(this.name, {}, pluralize(this.name));
+    return new Stream(this.name, 'where', {}, pluralize(this.name) + ':all');
   }
 
   static find(id) {
-    return new Stream(this.name, { id: id }, pluralize(this.name));
+    return new Stream(this.name, 'where', { id: id }, pluralize(this.name) + ':find:' + id);
   }
 
   static where(qry) {
-    return new Stream(this.name, qry, pluralize(this.name));
+    return new Stream(this.name, 'where', qry, pluralize(this.name) + ':where:' + JSON.stringify(qry));
   }
 
   static create(params) {
@@ -280,10 +280,11 @@ module.exports = Router;
 'use strict';
 
 class Stream {
-  constructor(model, query, id) {
+  constructor(model, action, params, id) {
     this.id = id;
     this.model = model;
-    this.query = query;
+    this.action = action;
+    this.params = params;
     this._reactions = [];
     this.data = null;
     this.handler = this.handler.bind(this);
@@ -317,29 +318,33 @@ class Stream {
   get msg() {
     return {
       id: this.id,
-      query: this.query,
-      model: this.model
+      params: this.params,
+      action: this.action,
+      model: this.model,
+      type: 'stream'
     };
   }
 
 }
 
 function request(model, action, params) {
-  var id = Math.random().toString(36).substr(2, 36);
-  socket.emit('request', {
-    id: id,
-    model: model,
-    action: action,
-    params: params
-  });
-
   return new Promise(function (resolve, reject) {
+    var id = Math.random().toString(36).substr(2, 36);
     socket.on('response' + id, function (data) {
+      console.log('got response');
       if (data && data.error) {
         reject(data);
       } else {
         resolve(data);
       }
+    });
+
+    socket.emit('request', {
+      id: 'response' + id,
+      model: model,
+      action: action,
+      params: params,
+      type: 'request'
     });
   });
 }
