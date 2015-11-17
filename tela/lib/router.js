@@ -5,7 +5,6 @@ const Router = {
 Router.route = function(path, view) {
   var current = Router._routes
   var spl = path.split('/')
-  if (spl[0] === '') { delete spl[0] }
   for (var i=0;i<spl.length;i++) {
 
     // create a node
@@ -24,7 +23,6 @@ Router.route = function(path, view) {
 
 Router.match = function(path) {
   var spl = path.split('/')
-  if (spl[0] === '') { spl = spl.splice(1) }
   var current = Router._routes
   var params = {}
   for (var i=0;i<spl.length;i++) {

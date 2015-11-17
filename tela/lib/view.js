@@ -82,9 +82,10 @@ class View extends Observes {
 
   insert(element) {
     return () => {
-      console.log('calling insert', element)
-      var res = this.formulas[element.formulaName].render.apply(this, [element]);
-      if (res) { document.getElementById(element.id).innerHTML = res }
+      console.log('calling insert', element.id)
+      var res = this.formulas[element.formulaName].render.apply(this, [element])
+      var plc = document.getElementById(element.id)
+      if (plc && res) { plc.innerHTML = res }
     }
   }
 
@@ -115,12 +116,8 @@ class View extends Observes {
         var inserted = element.formula.render.apply(this, [element])
         console.log('inserting', inserted)
 
-        if (ENV.server) {
-          var placeholder = `<span id="${element.id}">${inserted ? inserted : element.raw}</span>`
-          this.template = this.template.substring(0, element.start) + placeholder + this.template.substring(element.end)
-        } else {
-          console.log(element)
-        }
+        var placeholder = `<span id="${element.id}">${inserted ? inserted : element.raw}</span>`
+        this.template = this.template.substring(0, element.start) + placeholder + this.template.substring(element.end)
 
         // push onto the cache, this will bootstrap the new view on start
         this.cache.push(element)
@@ -139,8 +136,10 @@ class View extends Observes {
     // re run the cache inserting elements at the correct id. If not
     // we render the template.
     if (!this.cache[0]) {
+      console.log('nothing in the cache')
       parse(this.template, handleElement)
-      if (ENV.client) { document.getElementById('main').innerHTML = this.template }
+      console.log(this.template)
+      if (ENV.client) { console.log('inserting into dom') ; document.getElementById('main').innerHTML = this.template }
     } else {
       // for each element in the cache insert it into the template.
       document.getElementById('main').innerHTML = this.template

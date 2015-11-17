@@ -7,6 +7,7 @@ const ENV = {
 
 window.socket = require('socket.io-client')('http://localhost:3000')
 window.state  = {}
+window.currentPath = null
 window.ENV = ENV
 
 const app = {}
@@ -22,13 +23,15 @@ app.request   = require('./lib/stream').request
 app.router    = require('./lib/router')
 
 app.router.to = (path, evt, ctx) => {
-  path = path.replace(/[^\/]*\/\/[^\/]*/g, '')
+  path = path.replace(/[^\/]*\/\/[^\/]*/g, '') // remove stuff before the pathname
 
   if (!state[path]) {
-    var matched = app.router.match(path).view
+    var matched = app.router.match(path).view // match a path
     if (matched) {
       ctx = ctx || {}
       ctx.params = matched.params
+
+      // instantiate a new version of the view on the state with the current path.
       state[path] = new matched(ctx)
 
       state[path].on('ready', function(){
@@ -39,6 +42,9 @@ app.router.to = (path, evt, ctx) => {
         state[path].connect()
         state[path].render()
       })
+    } else {
+      // todo display error page
+      // app.router.to('/')
     }
   } else {
     state[path].render()

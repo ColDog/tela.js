@@ -25,6 +25,7 @@ app.config = function(config) {
   app.db = require('./db')(config.db)
   app.pages.index     = fs.readFileSync(config.files.index, 'utf8')
   app.pages.assets    = fs.readFileSync(config.files.js, 'utf8')
+  app.pages.error     = fs.readFileSync(config.files.error, 'utf8')
   app.pages.js_path   = config.files.js
   app.middleware = config.middleware || []
 }

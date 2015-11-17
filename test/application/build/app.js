@@ -8,6 +8,7 @@ const ENV = {
 
 window.socket = require('socket.io-client')('http://localhost:3000');
 window.state = {};
+window.currentPath = null;
 window.ENV = ENV;
 
 const app = {};
@@ -23,13 +24,15 @@ app.request = require('./lib/stream').request;
 app.router = require('./lib/router');
 
 app.router.to = (path, evt, ctx) => {
-  path = path.replace(/[^\/]*\/\/[^\/]*/g, '');
+  path = path.replace(/[^\/]*\/\/[^\/]*/g, ''); // remove stuff before the pathname
 
   if (!state[path]) {
-    var matched = app.router.match(path).view;
+    var matched = app.router.match(path).view; // match a path
     if (matched) {
       ctx = ctx || {};
       ctx.params = matched.params;
+
+      // instantiate a new version of the view on the state with the current path.
       state[path] = new matched(ctx);
 
       state[path].on('ready', function () {
@@ -40,10 +43,13 @@ app.router.to = (path, evt, ctx) => {
         state[path].connect();
         state[path].render();
       });
+    } else {
+      // todo display error page
+      // app.router.to('/')
     }
   } else {
-    state[path].render();
-  }
+      state[path].render();
+    }
 
   history.pushState(ctx, '', path);
 };
@@ -441,10 +447,11 @@ class View extends Observes {
 
   insert(element) {
     return () => {
-      console.log('calling insert', element);
+      console.log('calling insert', element.id);
       var res = this.formulas[element.formulaName].render.apply(this, [element]);
-      if (res) {
-        document.getElementById(element.id).innerHTML = res;
+      var plc = document.getElementById(element.id);
+      if (plc && res) {
+        plc.innerHTML = res;
       }
     };
   }
@@ -475,12 +482,8 @@ class View extends Observes {
         var inserted = element.formula.render.apply(this, [element]);
         console.log('inserting', inserted);
 
-        if (ENV.server) {
-          var placeholder = `<span id="${ element.id }">${ inserted ? inserted : element.raw }</span>`;
-          this.template = this.template.substring(0, element.start) + placeholder + this.template.substring(element.end);
-        } else {
-          console.log(element);
-        }
+        var placeholder = `<span id="${ element.id }">${ inserted ? inserted : element.raw }</span>`;
+        this.template = this.template.substring(0, element.start) + placeholder + this.template.substring(element.end);
 
         // push onto the cache, this will bootstrap the new view on start
         this.cache.push(element);
@@ -498,9 +501,11 @@ class View extends Observes {
     // re run the cache inserting elements at the correct id. If not
     // we render the template.
     if (!this.cache[0]) {
+      console.log('nothing in the cache');
       parse(this.template, handleElement);
+      console.log(this.template);
       if (ENV.client) {
-        document.getElementById('main').innerHTML = this.template;
+        console.log('inserting into dom');document.getElementById('main').innerHTML = this.template;
       }
     } else {
       // for each element in the cache insert it into the template.
@@ -7785,7 +7790,8 @@ module.exports = {
 },{}],66:[function(require,module,exports){
 module.exports = {
   index: ENV.root + '/build/index.html',
-  js: ENV.root + '/build/app.js'
+  js: ENV.root + '/build/app.js',
+  error: ENV.root + '/build/error.html'
 };
 
 },{}],67:[function(require,module,exports){
@@ -7794,9 +7800,8 @@ module.exports.formulas = require('./template-formulas');
 module.exports.files = require('./files');
 
 },{"./db":65,"./files":66,"./template-formulas":68}],68:[function(require,module,exports){
-'use strict'
-// todo write formula's and do not save formula's that are wrapped by another formula
-;
+'use strict';
+
 module.exports = {
   insert: {
     render: function (element) {

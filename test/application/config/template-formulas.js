@@ -1,5 +1,5 @@
 'use strict';
-// todo write formula's and do not save formula's that are wrapped by another formula
+
 module.exports = {
   insert: {
     render: function(element) {

@@ -14,8 +14,9 @@ module.exports = function(app) {
   function handleRequest(req, res){
     var start = Date.now()
     var ctx = {
+      req: req,
+      res: res,
       path: url.parse(req.url).pathname,
-
       done: false,
 
       // sends a redirect with a flash message header
@@ -27,8 +28,8 @@ module.exports = function(app) {
 
       // sends the html error page
       error: function(code) {
-        res.writeHead(code)
-        res.end('sorry')
+        res.writeHead(code, {'Content-Type': 'text/html'})
+        res.end(app.pages.error)
       }
     }
 

@@ -13,6 +13,8 @@ module.exports = app
 // a new application.
 require('./comments')(app)
 
+
+
 // app.start will start the server on the server and begin the router on the client.
 if (ENV.client) {
   // this is where you can put client specific code
