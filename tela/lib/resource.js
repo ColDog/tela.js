@@ -9,15 +9,15 @@ class Model {
   }
 
   static all() {
-    return new Stream(this.name, {}, pluralize(this.name))
+    return new Stream(this.name, 'where', {}, pluralize(this.name) + ':all')
   }
 
   static find(id) {
-    return new Stream(this.name, {id: id}, pluralize(this.name))
+    return new Stream(this.name, 'where', {id: id}, pluralize(this.name) + ':find:' + id)
   }
 
   static where(qry) {
-    return new Stream(this.name, qry, pluralize(this.name))
+    return new Stream(this.name, 'where', qry, pluralize(this.name) + ':where:' + JSON.stringify(qry))
   }
 
   static create(params) {

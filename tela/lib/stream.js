@@ -1,10 +1,11 @@
 'use strict'
 
 class Stream {
-  constructor(model, query, id) {
+  constructor(model, action, params, id) {
     this.id = id
     this.model = model
-    this.query = query
+    this.action = action
+    this.params = params
     this._reactions = []
     this.data = null
     this.handler = this.handler.bind(this)
@@ -38,8 +39,10 @@ class Stream {
   get msg() {
     return {
       id: this.id,
-      query: this.query,
-      model: this.model
+      params: this.params,
+      action: this.action,
+      model: this.model,
+      type: 'stream'
     }
   }
 
@@ -48,10 +51,11 @@ class Stream {
 function request(model, action, params) {
   var id = Math.random().toString(36).substr(2, 36);
   socket.emit('request', {
-    id: id,
+    id: 'response'+id,
     model: model,
     action: action,
-    params: params
+    params: params,
+    type: 'request'
   });
 
   return new Promise(function(resolve, reject){
