@@ -1,0 +1,17 @@
+{
+  "name": "live",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "browser": "client.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Colin Walker <cjwalker@sfu.ca> (www.colinw.info)",
+  "license": "ISC",
+  "dependencies": {
+    "observed": "^1.1.1",
+    "socket.io": "^1.3.7",
+    "socket.io-client": "^1.3.7"
+  }
+}
