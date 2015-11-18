@@ -1,3 +1,4 @@
 tela/node_modules
 test/application/node_modules
 tela/db/node_modules
+.idea/

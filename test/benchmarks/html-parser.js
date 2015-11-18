@@ -1,6 +1,6 @@
 'use strict'
 
-const parse = require('../../tela/lib/parser')
+const Dom = require('../../tela/lib/parser')
 const Benchmark = require('benchmark')
 
 let temp = `
@@ -27,9 +27,12 @@ suite
     return parser.parseComplete(temp)
   })
   .add('my parser', function(){
-    return parse(temp, function(el){ console.log(el) })
+    return new Dom(temp)
   })
   .on('complete', function() {
     console.log('Fastest is ' + this.filter('fastest').pluck('name'))
+  })
+  .on('cycle', function(event) {
+    console.log(String(event.target))
   })
   .run({ 'async': true });

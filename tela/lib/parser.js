@@ -46,6 +46,18 @@ function parse(tpl, dom) {
         html: function(val) {
           this.children = parse(val).children
         },
+        addHtml: function(val) {
+          this.children = this.children.concat( parse(val) )
+        },
+        addText: function(val) {
+          this.children.push({
+            attrs: {},
+            type: 'text',
+            value: val,
+            binding: val.match(/\{\{.*}}/) ? true : false,
+            children: []
+          })
+        },
         children: []
       })
 
