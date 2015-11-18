@@ -72,84 +72,32 @@ class View extends Observes {
         this[key].listen()
       }
     }
-
-    this.cache.forEach((element) => {
-      var st = this.stream(element.attrs.stream)
-      if (st) { st.react(this.insert(element)) }
-    })
   }
 
-  insert(element) {
-    return () => {
-      var res = this.formulas[element.formulaName].render.apply(this, [element])
-      var plc = document.getElementById(element.id)
-      if (plc && res) { plc.innerHTML = res }
-    }
+  insert(cacheItem) {
+    var res = cacheItem.render()
+    var plc = document.getElementById(cacheItem.id)
+    if (plc && res) { plc.innerHTML = res }
   }
 
 
   render() {
-
-    var handleElement = (element) => {
-      var formula = (element) => {
-        if (this.formulas[element.tag]) {
-          element.formula = this.formulas[element.tag]
-          element.formulaName = element.tag
-          return true
-        }
-
-        for (var key in this.formulas) {
-          if (this.formulas[key].use && this.formulas[key].use(element)) {
-            element.formula = this.formulas[key]
-            element.formulaName = key
-            return true
-          }
-        }
-        return false
-      }
-
-      if (formula(element)) {
-        // calculate from formula, insert the data into the template.
-        var inserted = element.formula.render.apply(this, [element])
-        var placeholder = `<span id="${element.id}">${inserted ? inserted : element.raw}</span>`
-
-        console.log(' ')
-        console.log('placeholder', placeholder)
-
-        this.template = this.template.substring(0, element.start) + placeholder + this.template.substring(element.end)
-
-        // push onto the cache, this will bootstrap the new view on start
-        this.cache.push(element)
-
-        // check if it is a stream and register a callback.
-        if (ENV.client) {
-          if (this.stream(element.attrs.stream)) {
-            this.stream(element.attrs.stream).react(this.insert(element))
-          }
-        }
-
-      }
-    }
-
     // check first if things have been cached. If they have, we just
     // re run the cache inserting elements at the correct id. If not
     // we render the template.
-    if (!this.cache[0]) {
-      parse(this.template, handleElement)
+    if (!this.cache[0]) { // NO Cache
+
+
+
       if (ENV.client) { document.getElementById('main').innerHTML = this.template }
     } else {
       // for each element in the cache insert it into the template.
       document.getElementById('main').innerHTML = this.template
-      this.cache.forEach((element) => { this.insert(element)() })
+      this.cache.forEach((item) => { this.insert(item) })
     }
 
     if (ENV.server) {
-      var bootstrap = `
-
-<script>
-  var serverCache = { path: "${this.ctx.path}", cache: ${JSON.stringify(this.cache)} }
-</script>
-`
+      var bootstrap = `<script>var serverCache = { path: "${this.ctx.path}", cache: ${JSON.stringify(this.cache)} }</script>`
       this.template += bootstrap
     }
 
