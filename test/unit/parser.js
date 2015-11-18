@@ -1,5 +1,15 @@
 'use strict'
 
+
+let temp = `
+  <h1>Hello World</h1>
+  <h2>Hello again</h2>
+  <p>
+    Hello there everyone, this is a pretty cool thing <small>hello</small>{{ hello }}.
+    <a href="hello">This is some cool stuff</a>
+  </p>
+`
+
 function parse(tpl, dom) {
   dom = dom || {tag: 'div', children: []}
   var rehtml = /<([^>]*)>/g
@@ -150,4 +160,12 @@ class Dom {
   }
 }
 
-module.exports = Dom
+
+var parser = new Parser(temp)
+parser.parse()
+
+parser.search('[href="hello"]').map((el) => {
+  console.log(el)
+})
+
+console.log(parser.html)

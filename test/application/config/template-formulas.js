@@ -10,17 +10,22 @@ module.exports = {
     }
   },
   react: {
-    render: function(element) {
-    },
-    use: function(element) {
-      return element.tag === 'react'
-    }
+    render: function(element) { }
   },
   for: {
     render: function(element) {
     },
     use: function(element) {
       return element.tag === 'for'
+    }
+  },
+  form: {
+    render: function(element) {
+      if (element.attrs.submit) {
+        return `<form onsubmit="state['${this.ctx.path}'].${element.attrs.submit}(this)">
+          ${element.raw}
+        </form>`
+      }
     }
   },
   each: {

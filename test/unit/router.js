@@ -7,10 +7,12 @@ const router = require('../../tela/lib/router')
 before(function() {
   router.route('/',              'home')
   router.route('/users/:id',     'user-id')
-  router.route('/users/new',     'new-user')
+  router.route('users/new',     'new-user')
   router.route('/home/hello',    'home-hello')
-  router.route('/hello',         'hello')
+  router.route('hello',         'hello')
   router.route('/hello/:another/is/:userId/really/long/route', 'hello-there')
+
+  console.log(router._routes)
 })
 
 
@@ -37,6 +39,11 @@ describe('router', () => {
   })
   it('/users/new', (done) => {
     var match = router.match('/users/new')
+    assert.equal(match.view, 'new-user')
+    done()
+  })
+  it('users/new', (done) => {
+    var match = router.match('users/new')
     assert.equal(match.view, 'new-user')
     done()
   })

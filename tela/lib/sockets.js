@@ -70,8 +70,8 @@ module.exports = function(app) {
 
             // runs the action and returns the result
             model[msg.action](msg.params).then(
-              (data)  => { console.log('responding data', msg.id, data) ; socket.emit(msg.id, toObject(data)) },
-              (err)   => { console.log('responding err', msg.id, err) ; socket.emit(msg.id, {error: err}) }
+              (data)  => { socket.emit(msg.id, toObject(data)) },
+              (err)   => { socket.emit(msg.id, {error: err}) }
             )
 
             // catch any errors and send them back the stream
@@ -95,7 +95,6 @@ module.exports = function(app) {
      * will be cached in the messages array which will be essentially read only.
      * */
     function isStale(update) {
-      console.log('calling is stale', update)
       // iterates through all messages
       app.clients[socket.id].forEach((msg) => {
 

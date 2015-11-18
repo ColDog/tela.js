@@ -2,7 +2,6 @@
 
 const View = require('../../../../../tela').View
 const Stream = require('../../../../../tela').Stream
-const Comment = require('../Comment')
 
 // This is the View, or ViewModel if you want to call it that. This is
 // where you fetch your data and specify the template that will be rendered.
@@ -10,16 +9,11 @@ const Comment = require('../Comment')
 // simply attach your data in the constructor and use it in the matching
 // template.
 
-class CommentIndex extends View {
+class Home extends View {
   constructor(ctx) {
     super(ctx)
     this.template = require('./index.html')
     this.formulas = require('../../../config').formulas
-    this.comments = Comment.all()
-  }
-
-  newComment(form) {
-
   }
 
   static before() {
@@ -27,4 +21,4 @@ class CommentIndex extends View {
 }
 
 
-module.exports = CommentIndex
+module.exports = Home

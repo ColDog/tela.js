@@ -17,19 +17,16 @@ class Stream {
   }
 
   listen() {
-    console.log('stream listening')
     socket.emit('stream', this.msg)
     socket.on(this.id, this.handler)
     return this
   }
 
   remove() {
-    console.log('stream not listening')
     socket.removeListener(this.id, this.handler)
   }
 
   handler(data) {
-    console.log('got stream data', data)
     this.data = data
     this._reactions.forEach(function(fn){
       fn(data)
@@ -52,7 +49,6 @@ function request(model, action, params) {
   return new Promise(function(resolve, reject){
     var id = Math.random().toString(36).substr(2, 36)
     socket.on('response'+id, function(data){
-      console.log('got response')
       if (data && data.error) {
         reject(data)
       } else {

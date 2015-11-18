@@ -23,12 +23,16 @@ app.Stream = require('./lib/stream').Stream;
 app.request = require('./lib/stream').request;
 app.router = require('./lib/router');
 
-app.router.to = (path, evt, ctx) => {
-  path = path.replace(/[^\/]*\/\/[^\/]*/g, ''); // remove stuff before the pathname
+app.router.to = (path, matched, ctx) => {
+  path = path.replace(/[^\/]*\/\/[^\/]*\//g, ''); // remove stuff before the pathname
+  console.log('routing@@', path);
+  window.currentPath = path; // set the current path
+  history.pushState({}, '', path);
 
   if (!state[path]) {
-    var matched = app.router.match(path).view; // match a path
+    matched = matched || app.router.match(path).view; // match a path
     if (matched) {
+
       ctx = ctx || {};
       ctx.params = matched.params;
 
@@ -44,14 +48,11 @@ app.router.to = (path, evt, ctx) => {
         state[path].render();
       });
     } else {
-      // todo display error page
-      // app.router.to('/')
+      window.location = path;
     }
   } else {
-      state[path].render();
-    }
-
-  history.pushState(ctx, '', path);
+    state[path].render();
+  }
 };
 
 app.config = function (config) {};
@@ -60,6 +61,7 @@ app.start = function () {
   app.router.to(document.location.pathname);
 
   window.addEventListener("popstate", function (evt) {
+    console.log('popstate!');
     var path = document.location;
     var state = evt.state;
     app.router.to(path, evt);
@@ -67,8 +69,11 @@ app.start = function () {
 
   document.onclick = function (evt) {
     if (evt.target.tagName === 'A') {
-      evt.preventDefault();
-      app.router.to(evt.target.href, evt);
+      var match = app.router.match(evt.target.href).view;
+      if (match) {
+        evt.preventDefault();
+        app.router.to(evt.target.href, match);
+      }
     }
   };
 };
@@ -194,17 +199,29 @@ class Model {
 
 module.exports = Model;
 
-},{"./stream":5,"pluralize":69}],4:[function(require,module,exports){
+},{"./stream":5,"pluralize":72}],4:[function(require,module,exports){
 const Router = {
   _routes: { children: {}, view: null }
 };
 
+// sanitizes the route string and adds consistency, ie. always have a '/' before
+// the start of a route, and never have one at the end. Also, remove multiple ///.
+function sanitize(path) {
+  path = path.replace(/[\/]{2,}/g, '/');
+  if (path[0] == '/') {
+    path = path.slice(1);
+  }
+  if (path[path.length] == '/') {
+    path = path.slice(0, -1);
+  }
+  return path;
+}
+
 Router.route = function (path, view) {
+  path = sanitize(path);
   var current = Router._routes;
   var spl = path.split('/');
-  if (spl[0] === '') {
-    delete spl[0];
-  }
+
   for (var i = 0; i < spl.length; i++) {
 
     // create a node
@@ -224,10 +241,9 @@ Router.route = function (path, view) {
 };
 
 Router.match = function (path) {
+  path = sanitize(path);
   var spl = path.split('/');
-  if (spl[0] === '') {
-    spl = spl.splice(1);
-  }
+
   var current = Router._routes;
   var params = {};
   for (var i = 0; i < spl.length; i++) {
@@ -302,19 +318,16 @@ class Stream {
   }
 
   listen() {
-    console.log('stream listening');
     socket.emit('stream', this.msg);
     socket.on(this.id, this.handler);
     return this;
   }
 
   remove() {
-    console.log('stream not listening');
     socket.removeListener(this.id, this.handler);
   }
 
   handler(data) {
-    console.log('got stream data', data);
     this.data = data;
     this._reactions.forEach(function (fn) {
       fn(data);
@@ -337,7 +350,6 @@ function request(model, action, params) {
   return new Promise(function (resolve, reject) {
     var id = Math.random().toString(36).substr(2, 36);
     socket.on('response' + id, function (data) {
-      console.log('got response');
       if (data && data.error) {
         reject(data);
       } else {
@@ -438,7 +450,6 @@ class View extends Observes {
 
     this.cache.forEach(element => {
       var st = this.stream(element.attrs.stream);
-      console.log('each cache', element.attrs.stream);
       if (st) {
         st.react(this.insert(element));
       }
@@ -447,7 +458,6 @@ class View extends Observes {
 
   insert(element) {
     return () => {
-      console.log('calling insert', element.id);
       var res = this.formulas[element.formulaName].render.apply(this, [element]);
       var plc = document.getElementById(element.id);
       if (plc && res) {
@@ -457,7 +467,6 @@ class View extends Observes {
   }
 
   render() {
-    console.log('rendering...');
 
     var handleElement = element => {
       var formula = element => {
@@ -480,8 +489,6 @@ class View extends Observes {
       if (formula(element)) {
         // calculate from formula, insert the data into the template.
         var inserted = element.formula.render.apply(this, [element]);
-        console.log('inserting', inserted);
-
         var placeholder = `<span id="${ element.id }">${ inserted ? inserted : element.raw }</span>`;
         this.template = this.template.substring(0, element.start) + placeholder + this.template.substring(element.end);
 
@@ -501,11 +508,9 @@ class View extends Observes {
     // re run the cache inserting elements at the correct id. If not
     // we render the template.
     if (!this.cache[0]) {
-      console.log('nothing in the cache');
       parse(this.template, handleElement);
-      console.log(this.template);
       if (ENV.client) {
-        console.log('inserting into dom');document.getElementById('main').innerHTML = this.template;
+        document.getElementById('main').innerHTML = this.template;
       }
     } else {
       // for each element in the cache insert it into the template.
@@ -7695,7 +7700,7 @@ class Comment extends app.db.Model {
 
 module.exports = Comment;
 
-},{"../main":64}],61:[function(require,module,exports){
+},{"../main":67}],61:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -7718,7 +7723,7 @@ module.exports = function (app) {
 };
 
 },{"./Comment":60,"./views/index":63}],62:[function(require,module,exports){
-module.exports = "<h1>Welcome to the comments view</h1>\n<ul>\n  <li each=\"item\" stream=\"comments\">{{content}}</li>\n</ul>\n";
+module.exports = "<h1>Welcome to the comments view</h1>\n<ul>\n  <li each=\"item\" stream=\"comments\">{{content}}</li>\n</ul>\n\n\n\n<form submit=\"newComment\">\n  <input name=\"\" type=\"text\" placeholder=\"comment\" />\n  <input type=\"submit\" value=\"send\" />\n</form>";
 
 },{}],63:[function(require,module,exports){
 'use strict';
@@ -7737,24 +7742,54 @@ class CommentIndex extends View {
   constructor(ctx) {
     super(ctx);
     this.template = require('./index.html');
-    this.comments = Comment.all();
     this.formulas = require('../../../config').formulas;
+    this.comments = Comment.all();
   }
 
-  get events() {
-    return {
-      'submit.new': function (data) {
-        Comment.create(data);
-      }
-    };
-  }
+  newComment(form) {}
 
   static before() {}
 }
 
 module.exports = CommentIndex;
 
-},{"../../../../../tela":1,"../../../config":67,"../Comment":60,"./index.html":62}],64:[function(require,module,exports){
+},{"../../../../../tela":1,"../../../config":70,"../Comment":60,"./index.html":62}],64:[function(require,module,exports){
+'use strict';
+
+module.exports = function (app) {
+  app.router.routes({
+    '/': require('./views/index')
+  });
+};
+
+},{"./views/index":66}],65:[function(require,module,exports){
+module.exports = "<h1>Welcome to the Home Page</h1>";
+
+},{}],66:[function(require,module,exports){
+'use strict';
+
+const View = require('../../../../../tela').View;
+const Stream = require('../../../../../tela').Stream;
+
+// This is the View, or ViewModel if you want to call it that. This is
+// where you fetch your data and specify the template that will be rendered.
+// the render function does different things on the server and the client.
+// simply attach your data in the constructor and use it in the matching
+// template.
+
+class Home extends View {
+  constructor(ctx) {
+    super(ctx);
+    this.template = require('./index.html');
+    this.formulas = require('../../../config').formulas;
+  }
+
+  static before() {}
+}
+
+module.exports = Home;
+
+},{"../../../../../tela":1,"../../../config":70,"./index.html":65}],67:[function(require,module,exports){
 'use strict';
 
 console.log('hello');
@@ -7769,8 +7804,8 @@ module.exports = app;
 // flexible module, it can be stored wherever you like and required with one line in
 // a new application.
 require('./comments')(app);
+require('./home')(app);
 
-// app.start will start the server on the server and begin the router on the client.
 if (ENV.client) {
   // this is where you can put client specific code
 } else if (ENV.server) {
@@ -7779,7 +7814,7 @@ if (ENV.client) {
 
 app.start();
 
-},{"../../../tela":1,"../config":67,"./comments":61}],65:[function(require,module,exports){
+},{"../../../tela":1,"../config":70,"./comments":61,"./home":64}],68:[function(require,module,exports){
 module.exports = {
   client: 'sqlite3',
   connection: {
@@ -7787,19 +7822,19 @@ module.exports = {
   }
 };
 
-},{}],66:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports = {
   index: ENV.root + '/build/index.html',
   js: ENV.root + '/build/app.js',
   error: ENV.root + '/build/error.html'
 };
 
-},{}],67:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 module.exports.db = require('./db');
 module.exports.formulas = require('./template-formulas');
 module.exports.files = require('./files');
 
-},{"./db":65,"./files":66,"./template-formulas":68}],68:[function(require,module,exports){
+},{"./db":68,"./files":69,"./template-formulas":71}],71:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -7822,6 +7857,18 @@ module.exports = {
     use: function (element) {
       return element.tag === 'for';
     }
+  },
+  form: {
+    render: function (element) {
+      console.log('using form');
+      if (element.attrs.submit) {
+        console.log('returning stuff');
+        return `<form onsubmit="state[${ this.ctx.path }].${ element.attrs.submit }(this)">
+          ${ element.raw }
+        </form>`;
+      }
+    },
+    use: function (element) {}
   },
   each: {
     render: function (element) {
@@ -7855,7 +7902,7 @@ function replaceBraces(raw) {
   return Function('self', 'return ' + code);
 }
 
-},{}],69:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 /* global define */
 
 (function (root, pluralize) {
@@ -8290,4 +8337,4 @@ function replaceBraces(raw) {
   return pluralize;
 });
 
-},{}]},{},[64])
+},{}]},{},[67])

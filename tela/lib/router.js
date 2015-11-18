@@ -2,9 +2,20 @@ const Router = {
   _routes: {children: {}, view: null},
 }
 
+// sanitizes the route string and adds consistency, ie. always have a '/' before
+// the start of a route, and never have one at the end. Also, remove multiple ///.
+function sanitize(path) {
+  path = path.replace(/[\/]{2,}/g, '/')
+  if (path[0] == '/') { path = path.slice(1) }
+  if (path[path.length] == '/') { path = path.slice(0, -1) }
+  return path
+}
+
 Router.route = function(path, view) {
+  path = sanitize(path)
   var current = Router._routes
   var spl = path.split('/')
+
   for (var i=0;i<spl.length;i++) {
 
     // create a node
@@ -22,7 +33,9 @@ Router.route = function(path, view) {
 }
 
 Router.match = function(path) {
+  path = sanitize(path)
   var spl = path.split('/')
+
   var current = Router._routes
   var params = {}
   for (var i=0;i<spl.length;i++) {

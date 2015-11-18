@@ -12,10 +12,10 @@ module.exports = app
 // flexible module, it can be stored wherever you like and required with one line in
 // a new application.
 require('./comments')(app)
+require('./home')(app)
 
 
 
-// app.start will start the server on the server and begin the router on the client.
 if (ENV.client) {
   // this is where you can put client specific code
 } else if (ENV.server) {

@@ -22,12 +22,16 @@ app.Stream    = require('./lib/stream').Stream
 app.request   = require('./lib/stream').request
 app.router    = require('./lib/router')
 
-app.router.to = (path, evt, ctx) => {
-  path = path.replace(/[^\/]*\/\/[^\/]*/g, '') // remove stuff before the pathname
+app.router.to = (path, matched, ctx) => {
+  path = path.replace(/[^\/]*\/\/[^\/]*\//g, '') // remove stuff before the pathname
+  window.currentPath = path // set the current path
+  history.pushState({}, '', path)
 
   if (!state[path]) {
-    var matched = app.router.match(path).view // match a path
+    matched = matched || app.router.match(path).view // match a path
     if (matched) {
+
+
       ctx = ctx || {}
       ctx.params = matched.params
 
@@ -43,14 +47,12 @@ app.router.to = (path, evt, ctx) => {
         state[path].render()
       })
     } else {
-      // todo display error page
-      // app.router.to('/')
+      window.location = path
     }
   } else {
     state[path].render()
   }
 
-  history.pushState(ctx, '', path)
 }
 
 app.config = function(config) { }
@@ -66,8 +68,11 @@ app.start = function() {
 
   document.onclick = function(evt) {
     if (evt.target.tagName === 'A') {
-      evt.preventDefault()
-      app.router.to(evt.target.href, evt)
+      var match = app.router.match(evt.target.href).view
+      if (match) {
+        evt.preventDefault()
+        app.router.to(evt.target.href, match)
+      }
     }
   }
 }
